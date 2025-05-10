@@ -1,0 +1,23 @@
+=== Bus Maintenance Facility Simulation Report ===
+
+Configuration:
+  simulation_time: 160.0
+  arrival_mean: 2.0
+  inspection_min: 0.25
+  inspection_max: 1.05
+  repair_probability: 0.3
+  repair_min: 2.1
+  repair_max: 4.5
+  num_inspectors: 1
+  num_repair_stations: 2
+  seed: 42
+  output_dir: results/bus
+
+Simulation Results:
+Buses processed: 75
+Average inspection queue length: 0.09
+Average repair queue length: 0.00
+Average inspection delay: 0.20 hours
+Average repair delay: 0.02 hours
+Inspection station utilization: 0.29
+Repair stations utilization: 0.22
