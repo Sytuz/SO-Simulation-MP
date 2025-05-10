@@ -33,7 +33,7 @@ def is_system_stable(result, queue_threshold=10, delay_threshold=5.0, util_thres
     return queue_stable and delay_stable and util_stable
 
 
-def run_arrival_rate_experiment(base_config, min_rate=0.1, max_rate=4.0, num_points=100):
+def run_arrival_rate_experiment(base_config, min_rate=0.1, max_rate=4.0, num_points=200):
     """Run simulations with different arrival rates to find capacity limit
     
     Args:
@@ -42,12 +42,13 @@ def run_arrival_rate_experiment(base_config, min_rate=0.1, max_rate=4.0, num_poi
         max_rate: Maximum arrival rate to test (buses/hour)
         num_points: Number of test points between min and max
     """
-    # Generate rates with more points near the critical threshold
-    # Logarithmic spacing for better distribution
-    rates = np.logspace(np.log10(min_rate), np.log10(max_rate), num_points)
+    #rates = np.logspace(np.log10(min_rate), np.log10(max_rate), num_points)
+    # Generate rates with linear spacing
+    rates = np.linspace(min_rate, max_rate, num_points)
+
     # Sort in ascending order to find stable rates first
     rates = sorted(rates)
-        
+    
     results = []
     unstable_count = 0
     
@@ -81,9 +82,9 @@ def run_arrival_rate_experiment(base_config, min_rate=0.1, max_rate=4.0, num_poi
         else:
             unstable_count = 0
             
-        # If 3 unstable points in a row were found and have at least 10 data points, stop the experiment
+        # If 5 unstable points in a row were found and have at least 10 data points, stop the experiment
         # This is a heuristic to avoid running too many simulations after the system has clearly become unstable
-        if unstable_count >= 3 and len(results) >= 10:
+        if unstable_count >= 5 and len(results) >= 10:
             print("Multiple consecutive unstable points detected, stopping experiment")
             break
             

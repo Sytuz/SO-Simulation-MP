@@ -10,11 +10,11 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from bus.config import load_config
 from bus.simulation import BusMaintenanceSimulation
-from bus.visualization import plot_results, plot_experiment_results, save_report
+from bus.visualization import plot_results, plot_experiment_results, plot_experiment_results_smoothed, save_report
 from bus.experiments import run_arrival_rate_experiment
 
 
-def run_experiment(config, min_rate=0.1, max_rate=4.0, num_points=100):
+def run_experiment(config, min_rate=0.1, max_rate=4.0, num_points=200):
     """Run the arrival rate experiment
     
     Args:
@@ -44,7 +44,8 @@ def run_experiment(config, min_rate=0.1, max_rate=4.0, num_points=100):
                 max_stable_rate=max_stable_rate, output_dir=config.output_dir)
     
     # Plot experiment results with the specified output directory
-    plot_experiment_results(results, output_dir=config.output_dir)
+    plot_experiment_results(results, output_dir="results/bus")
+    plot_experiment_results_smoothed(results, output_dir="results/bus")
     
     return results, max_stable_rate
 
@@ -98,7 +99,7 @@ def main():
                         help='Minimum arrival rate to test (buses/hour)')
     parser.add_argument('--max-rate', type=float, default=4.0, 
                         help='Maximum arrival rate to test (buses/hour)')  
-    parser.add_argument('--num-points', type=int, default=100,
+    parser.add_argument('--num-points', type=int, default=200,
                         help='Number of test points for arrival rate experiment')
     args = parser.parse_args()
     
