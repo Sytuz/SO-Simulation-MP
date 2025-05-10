@@ -8,7 +8,7 @@ import sys
 # Add parent directory to path for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from bus.config import load_config, SimConfig
+from bus.config import load_config
 from bus.simulation import BusMaintenanceSimulation
 from bus.visualization import plot_results, plot_experiment_results, save_report
 from bus.experiments import run_arrival_rate_experiment
@@ -17,11 +17,22 @@ from bus.experiments import run_arrival_rate_experiment
 def main():
     """Main function to parse arguments and run the simulation"""
     parser = argparse.ArgumentParser(description='Bus Maintenance Facility Simulation')
-    parser.add_argument('--config', type=str, help='Path to configuration file')
-    parser.add_argument('--time', type=float, help='Simulation time in hours')
-    parser.add_argument('--seed', type=int, help='Random seed')
-    parser.add_argument('--output', type=str, help='Output directory for results')
-    parser.add_argument('--experiment', action='store_true', help='Run arrival rate experiment')
+    parser.add_argument('--config', type=str, 
+                        help='Path to configuration file')
+    parser.add_argument('--time', type=float, 
+                        help='Simulation time in hours')
+    parser.add_argument('--seed', type=int, 
+                        help='Random seed')
+    parser.add_argument('--output', type=str, 
+                        help='Output directory for results')
+    parser.add_argument('--experiment', action='store_true', 
+                        help='Run arrival rate experiment')
+    parser.add_argument('--min-rate', type=float, default=0.1, 
+                        help='Minimum arrival rate to test (buses/hour)')
+    parser.add_argument('--max-rate', type=float, default=4.0, 
+                        help='Maximum arrival rate to test (buses/hour)')  
+    parser.add_argument('--num-points', type=int, default=100,
+                        help='Number of test points for arrival rate experiment')
     args = parser.parse_args()
     
     # Load configuration
@@ -40,7 +51,12 @@ def main():
     
     if args.experiment:
         print("Running arrival rate experiment to find capacity limits...")
-        results, max_stable_rate = run_arrival_rate_experiment(config)
+        results, max_stable_rate = run_arrival_rate_experiment(
+            config, 
+            min_rate=args.min_rate, 
+            max_rate=args.max_rate,
+            num_points=args.num_points
+        )
         if max_stable_rate:
             print("\nExperiment Results Summary:")
             print(f"Maximum stable arrival rate: {max_stable_rate['rate']:.3f} buses/hour")

@@ -13,11 +13,8 @@ Configuration:
   seed: 42
   output_dir: results/bus
 
-Simulation Results:
-Buses processed: 75
-Average inspection queue length: 0.09
-Average repair queue length: 0.00
-Average inspection delay: 0.20 hours
-Average repair delay: 0.02 hours
-Inspection station utilization: 0.29
-Repair stations utilization: 0.22
+Experiment Results:
+Maximum stable arrival rate: 1.409 buses/hour
+(equivalent to mean interarrival time: 0.710 hours)
+At maximum stable rate - Inspection utilization: 0.84
+At maximum stable rate - Repair utilization: 0.66
