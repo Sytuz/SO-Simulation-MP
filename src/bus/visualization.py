@@ -4,6 +4,7 @@ Visualization functions for bus simulation results.
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+import statistics
 from scipy.signal import savgol_filter
 
 
@@ -512,6 +513,138 @@ def plot_experiment_results_smoothed(results, output_dir="results/bus"):
     plt.savefig(f'{output_dir}/bus_analysis_summary.png', dpi=300, bbox_inches='tight')
     plt.close()
 
+def plot_n_simulation_results(stats, n, config):
+    """Plot results from multiple simulations showing averages and min-max ranges
+    
+    Args:
+        stats: Dictionary containing aggregate statistics
+        n: Number of simulations run
+        config: Simulation configuration
+    """
+    output_dir = config.output_dir
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # Create figure with multiple subplots
+    fig, axs = plt.subplots(2, 2, figsize=(16, 10))
+    fig.suptitle(f'Results from {n} Simulations (Arrival Rate: {config.arrival_mean:.2f} buses/hour)', fontsize=16)
+    
+    # Plot 1: Queue Lengths
+    ax = axs[0, 0]
+    metrics = ['inspection_queue', 'repair_queue']
+    labels = ['Inspection Queue', 'Repair Queue']
+    values = [stats['avg_inspection_queue'], stats['avg_repair_queue']]
+    min_vals = [stats['min_inspection_queue'], stats['min_repair_queue']]
+    max_vals = [stats['max_inspection_queue'], stats['max_repair_queue']]
+    
+    x = np.arange(len(metrics))
+    width = 0.35
+    
+    # Plot bars with error bars showing min-max range
+    bars = ax.bar(x, values, width, yerr=np.array([
+        [v - min_v for v, min_v in zip(values, min_vals)],
+        [max_v - v for v, max_v in zip(values, max_vals)]
+    ]), capsize=10, label='Average', color='skyblue')
+    
+    ax.set_ylabel('Queue Length')
+    ax.set_title('Average Queue Lengths with Min-Max Range')
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+    ax.grid(True, linestyle='--', alpha=0.7)
+    
+    # Add value labels moved to the right of the bars
+    for bar in bars:
+        height = bar.get_height()
+        ax.annotate(f'{height:.2f}',
+                    xy=(bar.get_x() + bar.get_width() / 2, height),
+                    xytext=(10, 3),  # horizontal offset to the right, vertical offset
+                    textcoords="offset points",
+                    ha='left', va='bottom')  # left alignment pushes text to the right
+    
+    # Plot 2: Delays
+    ax = axs[0, 1]
+    metrics = ['inspection_delay', 'repair_delay']
+    labels = ['Inspection Delay', 'Repair Delay']
+    values = [stats['avg_inspection_delay'], stats['avg_repair_delay']]
+    min_vals = [stats['min_inspection_delay'], stats['min_repair_delay']]
+    max_vals = [stats['max_inspection_delay'], stats['max_repair_delay']]
+    
+    x = np.arange(len(metrics))
+    
+    bars = ax.bar(x, values, width, yerr=np.array([
+        [v - min_v for v, min_v in zip(values, min_vals)],
+        [max_v - v for v, max_v in zip(values, max_vals)]
+    ]), capsize=10, label='Average', color='lightgreen')
+    
+    ax.set_ylabel('Time (hours)')
+    ax.set_title('Average Delays with Min-Max Range')
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+    ax.grid(True, linestyle='--', alpha=0.7)
+    
+    for bar in bars:
+        height = bar.get_height()
+        ax.annotate(f'{height:.2f}',
+                    xy=(bar.get_x() + bar.get_width() / 2, height),
+                    xytext=(10, 3),  # horizontal offset to the right, vertical offset
+                    textcoords="offset points",
+                    ha='left', va='bottom')  # left alignment pushes text to the right
+    
+    # Plot 3: Utilization
+    ax = axs[1, 0]
+    metrics = ['inspection_utilization', 'repair_utilization']
+    labels = ['Inspection Stations', 'Repair Stations']
+    values = [stats['avg_inspection_utilization'], stats['avg_repair_utilization']]
+    min_vals = [stats['min_inspection_utilization'], stats['min_repair_utilization']]
+    max_vals = [stats['max_inspection_utilization'], stats['max_repair_utilization']]
+    
+    x = np.arange(len(metrics))
+    
+    bars = ax.bar(x, values, width, yerr=np.array([
+        [v - min_v for v, min_v in zip(values, min_vals)],
+        [max_v - v for v, max_v in zip(values, max_vals)]
+    ]), capsize=10, label='Average', color='salmon')
+    
+    ax.set_ylabel('Utilization')
+    ax.set_title('Average Station Utilization with Min-Max Range')
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+    ax.set_ylim(0, 1)
+    ax.grid(True, linestyle='--', alpha=0.7)
+    
+    for bar in bars:
+        height = bar.get_height()
+        ax.annotate(f'{height:.2f}',
+                    xy=(bar.get_x() + bar.get_width() / 2, height),
+                    xytext=(10, 3),  # horizontal offset to the right, vertical offset
+                    textcoords="offset points",
+                    ha='left', va='bottom')  # left alignment pushes text to the right
+    
+    # Plot 4: Buses Processed
+    ax = axs[1, 1]
+    ax.set_title('Buses Processed Statistics')
+    
+    # Create text summary instead of a graph
+    textstr = '\n'.join((
+        f'Total Buses Processed: {stats["total_buses_processed"]}',
+        f'Average Buses per Simulation: {stats["avg_buses_processed"]:.2f}',
+        f'Minimum Buses in a Simulation: {stats["min_buses_processed"]}',
+        f'Maximum Buses in a Simulation: {stats["max_buses_processed"]}',
+        f'Range (Max-Min): {stats["max_buses_processed"] - stats["min_buses_processed"]}',
+    ))
+    
+    props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+    ax.text(0.5, 0.5, textstr, transform=ax.transAxes, fontsize=12,
+            verticalalignment='center', horizontalalignment='center', bbox=props)
+    ax.axis('off')
+    
+    plt.tight_layout()
+    plt.subplots_adjust(top=0.92)
+    
+    # Save the figure
+    plt.savefig(os.path.join(output_dir, 'multiple_simulation_results.png'), dpi=300)
+    plt.close()
+    
+    print(f"Multiple simulation results plot saved to {output_dir}/multiple_simulation_results.png")
 
 def save_report(results, config, is_experiment=False, max_stable_rate=None, output_dir="results/bus"):
     """Save a text report of simulation results"""
@@ -546,3 +679,69 @@ def save_report(results, config, is_experiment=False, max_stable_rate=None, outp
             f.write(f"Average repair delay: {results['avg_repair_delay']:.2f} hours\n")
             f.write(f"Inspection station utilization: {results['inspection_utilization']:.2f}\n")
             f.write(f"Repair stations utilization: {results['repair_utilization']:.2f}\n")
+
+def save_n_simulations_report(aggregate_stats, config, n, seed_info, output_dir="results/bus"):
+    """Save a text report of multiple simulation results
+    
+    Args:
+        aggregate_stats: Dictionary containing aggregate statistics
+        config: Simulation configuration
+        n: Number of simulations run
+        seed_info: Information about seeds used (base seed and range)
+        output_dir: Directory to save the report
+    """
+    # Ensure output directory exists
+    os.makedirs(output_dir, exist_ok=True)
+    
+    with open(f'{output_dir}/multiple_simulations_report.txt', 'w') as f:
+        # Write header
+        f.write("=== Bus Maintenance Facility Multiple Simulations Report ===\n\n")
+        
+        # Write simulation metadata
+        f.write(f"Number of Simulations Run: {n}\n")
+        f.write(f"Base Random Seed: {seed_info['base']}\n")
+        f.write(f"Seed Range: {seed_info['base']} to {seed_info['base'] + n - 1}\n\n")
+        
+        # Write configuration information
+        f.write("Configuration:\n")
+        for key, value in vars(config).items():
+            if key != 'seed':  # Already reported above
+                f.write(f"  {key}: {value}\n")
+        f.write("\n")
+        
+        # Write aggregate results
+        f.write("Aggregate Simulation Results:\n")
+        f.write(f"Total buses processed across all simulations: {aggregate_stats['total_buses_processed']}\n")
+        f.write(f"Average buses processed per simulation: {aggregate_stats['avg_buses_processed']:.2f}\n")
+        f.write(f"  Min: {aggregate_stats['min_buses_processed']}, Max: {aggregate_stats['max_buses_processed']}\n")
+        f.write(f"  Range: {aggregate_stats['max_buses_processed'] - aggregate_stats['min_buses_processed']}\n\n")
+        
+        f.write(f"Average inspection queue length: {aggregate_stats['avg_inspection_queue']:.2f}\n")
+        f.write(f"  Min: {aggregate_stats['min_inspection_queue']:.2f}, Max: {aggregate_stats['max_inspection_queue']:.2f}\n\n")
+        
+        f.write(f"Average repair queue length: {aggregate_stats['avg_repair_queue']:.2f}\n")
+        f.write(f"  Min: {aggregate_stats['min_repair_queue']:.2f}, Max: {aggregate_stats['max_repair_queue']:.2f}\n\n")
+        
+        f.write(f"Average inspection delay: {aggregate_stats['avg_inspection_delay']:.2f} hours\n")
+        f.write(f"  Min: {aggregate_stats['min_inspection_delay']:.2f}, Max: {aggregate_stats['max_inspection_delay']:.2f}\n\n")
+        
+        f.write(f"Average repair delay: {aggregate_stats['avg_repair_delay']:.2f} hours\n")
+        f.write(f"  Min: {aggregate_stats['min_repair_delay']:.2f}, Max: {aggregate_stats['max_repair_delay']:.2f}\n\n")
+        
+        f.write(f"Average inspection station utilization: {aggregate_stats['avg_inspection_utilization']:.2f}\n")
+        f.write(f"  Min: {aggregate_stats['min_inspection_utilization']:.2f}, Max: {aggregate_stats['max_inspection_utilization']:.2f}\n\n")
+        
+        f.write(f"Average repair stations utilization: {aggregate_stats['avg_repair_utilization']:.2f}\n")
+        f.write(f"  Min: {aggregate_stats['min_repair_utilization']:.2f}, Max: {aggregate_stats['max_repair_utilization']:.2f}\n")
+        
+        # Add statistical summary
+        f.write("\nStatistical Summary:\n")
+        f.write(f"Standard deviation of buses processed: {statistics.stdev(aggregate_stats.get('buses_processed_list', [0])):.2f}\n")
+        f.write(f"Standard deviation of inspection queue: {statistics.stdev(aggregate_stats.get('inspection_queue_list', [0])):.2f}\n")
+        f.write(f"Standard deviation of repair queue: {statistics.stdev(aggregate_stats.get('repair_queue_list', [0])):.2f}\n")
+        
+        # Add timestamp
+        from datetime import datetime
+        f.write(f"\nReport generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+    
+    print(f"Multiple simulations report saved to {output_dir}/multiple_simulations_report.txt")
