@@ -169,35 +169,57 @@ def save_report(config, euler_results=None, rk4_results=None, precision=None,
             f.write(f"  {key}: {value}\n")
         f.write("\n")
         
-        # Standard simulation results
-        if euler_results and config.method in ["euler", "both"]:
-            f.write("Euler Method Results:\n")
-            if landing_euler and landing_euler['found']:
-                f.write(f"  Landing time: {landing_euler['time']:.2f} s\n")
-                f.write(f"  Landing distance: {landing_euler['distance']:.2f} m\n")
-            else:
-                f.write("  No landing point detected\n")
-            f.write("\n")
+        # Final state table
+        if config.method in ["euler", "both"] and euler_results:
+            f.write("Final State:\n")
+            f.write(f"{'Method':<10} {'Time (s)':<10} {'X (m)':<10} {'Z (m)':<10} {'VX (m/s)':<10} {'VZ (m/s)':<10}\n")
+            f.write("-" * 60 + "\n")
             
-        if rk4_results and config.method in ["rk4", "both"]:
-            f.write("RK4 Method Results:\n")
-            if landing_rk4 and landing_rk4['found']:
-                f.write(f"  Landing time: {landing_rk4['time']:.2f} s\n")
-                f.write(f"  Landing distance: {landing_rk4['distance']:.2f} m\n")
-            else:
-                f.write("  No landing point detected\n")
-            f.write("\n")
+            if config.method in ["euler", "both"]:
+                f.write(f"{'Euler':<10} {euler_results['time'][-1]:<10.2f} "
+                        f"{euler_results['x'][-1]:<10.2f} {euler_results['z'][-1]:<10.2f} "
+                        f"{euler_results['vx'][-1]:<10.2f} {euler_results['vz'][-1]:<10.2f}\n")
             
+            if config.method in ["rk4", "both"]:
+                f.write(f"{'RK4':<10} {rk4_results['time'][-1]:<10.2f} "
+                        f"{rk4_results['x'][-1]:<10.2f} {rk4_results['z'][-1]:<10.2f} "
+                        f"{rk4_results['vx'][-1]:<10.2f} {rk4_results['vz'][-1]:<10.2f}\n")
+            
+            f.write("\n")
+        
+        # Landing position table
+        f.write("Landing Positions:\n")
+        f.write(f"{'Method':<10} {'Time (s)':<10} {'Distance (m)':<15} {'Found':<10}\n")
+        f.write("-" * 45 + "\n")
+        
+        if landing_euler:
+            time_str = f"{landing_euler['time']:.2f}" if landing_euler['found'] else "N/A"
+            dist_str = f"{landing_euler['distance']:.2f}" if landing_euler['found'] else "N/A"
+            f.write(f"{'Euler':<10} {time_str:<10} {dist_str:<15} {'Yes' if landing_euler['found'] else 'No':<10}\n")
+        
+        if landing_rk4:
+            time_str = f"{landing_rk4['time']:.2f}" if landing_rk4['found'] else "N/A"
+            dist_str = f"{landing_rk4['distance']:.2f}" if landing_rk4['found'] else "N/A"
+            f.write(f"{'RK4':<10} {time_str:<10} {dist_str:<15} {'Yes' if landing_rk4['found'] else 'No':<10}\n")
+        
+        f.write("\n")
+        
         # Precision comparison
         if precision and config.method == "both":
-            f.write("Precision Comparison:\n")
-            f.write(f"  Euler X error: {precision['euler_x_error']:.6f} m\n")
-            f.write(f"  Euler Z error: {precision['euler_z_error']:.6f} m\n")
-            f.write(f"  RK4 X error: {precision['rk4_x_error']:.6f} m\n")
-            f.write(f"  RK4 Z error: {precision['rk4_z_error']:.6f} m\n")
-            f.write(f"  Euler total error: {precision['euler_error_total']:.6f} m\n")
-            f.write(f"  RK4 total error: {precision['rk4_error_total']:.6f} m\n")
-            f.write(f"  RK4 is {precision['euler_error_total'] / precision['rk4_error_total']:.1f}x more accurate than Euler\n")
+            f.write("Precision Comparison (RMS Error vs Reference Solution):\n")
+            f.write(f"{'Method':<10} {'X Error (m)':<15} {'Z Error (m)':<15} {'Total Error (m)':<15}\n")
+            f.write("-" * 55 + "\n")
+            f.write(f"{'Euler':<10} {precision['euler_x_error']:<15.6f} "
+                    f"{precision['euler_z_error']:<15.6f} {precision['euler_error_total']:<15.6f}\n")
+            f.write(f"{'RK4':<10} {precision['rk4_x_error']:<15.6f} "
+                    f"{precision['rk4_z_error']:<15.6f} {precision['rk4_error_total']:<15.6f}\n")
+            
+            if precision['rk4_error_total'] > 1e-10:
+                ratio = precision['euler_error_total'] / precision['rk4_error_total']
+                f.write(f"\nRK4 is approximately {ratio:.1f}x more accurate than Euler\n")
+            else:
+                f.write("\nRK4 error is extremely small compared to Euler\n")
+            
             f.write("\n")
             
         # Convergence study results
@@ -207,7 +229,10 @@ def save_report(config, euler_results=None, rk4_results=None, precision=None,
             f.write(f"  RK4 method convergence order: O(Δt^{convergence_results['rk4_order']:.2f})\n")
             f.write("\n")
             f.write("  Detailed results by time step:\n")
+            
+            f.write(f"{'dt (s)':<10} {'Euler Error (m)':<20} {'RK4 Error (m)':<20}\n")
+            f.write("-" * 50 + "\n")
+            
             for result in convergence_results['results']:
-                f.write(f"  dt = {result['dt']:.5f} s:\n")
-                f.write(f"    Euler error: {result['euler_impact_error']:.6f} m\n")
-                f.write(f"    RK4 error: {result['rk4_impact_error']:.6f} m\n")
+                f.write(f"{result['dt']:<10.5f} {result['euler_impact_error']:<20.6f} "
+                        f"{result['rk4_impact_error']:<20.6f}\n")

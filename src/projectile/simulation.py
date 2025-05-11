@@ -119,11 +119,15 @@ class ProjectileSimulation:
         ref_x = interp1d(ref_results['time'], ref_results['x'])(self.times)
         ref_z = interp1d(ref_results['time'], ref_results['z'])(self.times)
         
-        # Calculate errors
-        euler_x_error = np.mean(np.abs(self.results_euler[:, 0] - ref_x))
-        euler_z_error = np.mean(np.abs(self.results_euler[:, 1] - ref_z))
-        rk4_x_error = np.mean(np.abs(self.results_rk4[:, 0] - ref_x))
-        rk4_z_error = np.mean(np.abs(self.results_rk4[:, 1] - ref_z))
+        # Calculate errors using RMS instead of mean for better representation
+        euler_x_error = np.sqrt(np.mean((self.results_euler[:, 0] - ref_x)**2))
+        euler_z_error = np.sqrt(np.mean((self.results_euler[:, 1] - ref_z)**2))
+        rk4_x_error = np.sqrt(np.mean((self.results_rk4[:, 0] - ref_x)**2))
+        rk4_z_error = np.sqrt(np.mean((self.results_rk4[:, 1] - ref_z)**2))
+        
+        # Ensure we don't have exactly zero errors (which would cause division problems)
+        rk4_x_error = max(rk4_x_error, 1e-12)
+        rk4_z_error = max(rk4_z_error, 1e-12)
         
         return {
             'euler_x_error': euler_x_error,

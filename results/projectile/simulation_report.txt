@@ -13,23 +13,19 @@ Configuration:
   method: both
   output_dir: results/projectile
 
+Landing Positions:
+Method     Time (s)   Distance (m)    Found     
+---------------------------------------------
+
 Convergence Study Results:
   Euler method convergence order: O(Δt^1.12)
   RK4 method convergence order: O(Δt^0.98)
 
   Detailed results by time step:
-  dt = 0.10000 s:
-    Euler error: 0.636961 m
-    RK4 error: 0.971361 m
-  dt = 0.05000 s:
-    Euler error: 0.274414 m
-    RK4 error: 0.432284 m
-  dt = 0.01000 s:
-    Euler error: 0.031217 m
-    RK4 error: 0.107433 m
-  dt = 0.00500 s:
-    Euler error: 0.016093 m
-    RK4 error: 0.053188 m
-  dt = 0.00100 s:
-    Euler error: 0.004078 m
-    RK4 error: 0.009771 m
+dt (s)     Euler Error (m)      RK4 Error (m)       
+--------------------------------------------------
+0.10000    0.636961             0.971361            
+0.05000    0.274414             0.432284            
+0.01000    0.031217             0.107433            
+0.00500    0.016093             0.053188            
+0.00100    0.004078             0.009771            

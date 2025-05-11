@@ -21,50 +21,124 @@ def run_simulation(config):
     sim = ProjectileSimulation(config)
     euler_results, rk4_results = sim.run()
     
+    # Print final state information in tabular format
+    print("\n===== SIMULATION RESULTS =====")
+    print("\nFinal State:")
+    headers = ["Method", "Time (s)", "x (m)", "z (m)", "vx (m/s)", "vz (m/s)"]
+    rows = []
+    
+    if config.method in ["euler", "both"]:
+        rows.append([
+            "Euler",
+            f"{euler_results['time'][-1]:.2f}",
+            f"{euler_results['x'][-1]:.2f}",
+            f"{euler_results['z'][-1]:.2f}",
+            f"{euler_results['vx'][-1]:.2f}",
+            f"{euler_results['vz'][-1]:.2f}"
+        ])
+    
+    if config.method in ["rk4", "both"]:
+        rows.append([
+            "RK4",
+            f"{rk4_results['time'][-1]:.2f}",
+            f"{rk4_results['x'][-1]:.2f}",
+            f"{rk4_results['z'][-1]:.2f}",
+            f"{rk4_results['vx'][-1]:.2f}",
+            f"{rk4_results['vz'][-1]:.2f}"
+        ])
+    
+    # Print table
+    col_widths = [10, 10, 10, 10, 10, 10]
+    print_table(headers, rows, col_widths)
+    
     # Calculate precision comparison if using both methods
     precision = None
     if config.method == "both":
         # Calculate maximum differences
         max_x_diff = np.max(np.abs(euler_results['x'] - rk4_results['x']))
         max_z_diff = np.max(np.abs(euler_results['z'] - rk4_results['z']))
-        print(f"\nMaximum difference between methods:")
-        print(f"X position: {max_x_diff:.6f} m")
-        print(f"Z position: {max_z_diff:.6f} m")
+        print(f"\nDifference between methods:")
+        print(f"Maximum X position difference: {max_x_diff:.6f} m")
+        print(f"Maximum Z position difference: {max_z_diff:.6f} m")
         
-        # Calculate precision comparison
+        # Calculate precision comparison with a more appropriate reference
         precision = sim.compare_precision()
-        print(f"\nAverage error compared to reference solution:")
-        print(f"Euler X: {precision['euler_x_error']:.6f} m")
-        print(f"Euler Z: {precision['euler_z_error']:.6f} m")
-        print(f"RK4 X: {precision['rk4_x_error']:.6f} m")
-        print(f"RK4 Z: {precision['rk4_z_error']:.6f} m")
-        print(f"Euler total error: {precision['euler_error_total']:.6f} m")
-        print(f"RK4 total error: {precision['rk4_error_total']:.6f} m")
-        print(f"RK4 is {precision['euler_error_total'] / precision['rk4_error_total']:.1f}x more accurate than Euler")
+        
+        # Print precision comparison in tabular format
+        print("\nComparison with reference solution (dt = 0.0001):")
+        headers = ["Method", "X Error (m)", "Z Error (m)", "Total Error (m)"]
+        rows = [
+            ["Euler", f"{precision['euler_x_error']:.6f}", f"{precision['euler_z_error']:.6f}", f"{precision['euler_error_total']:.6f}"],
+            ["RK4", f"{precision['rk4_x_error']:.6f}", f"{precision['rk4_z_error']:.6f}", f"{precision['rk4_error_total']:.6f}"]
+        ]
+        print_table(headers, rows, [10, 15, 15, 15])
+        
+        # Calculate accuracy ratio with protection against very small values
+        if precision['rk4_error_total'] > 1e-10:
+            ratio = precision['euler_error_total'] / precision['rk4_error_total']
+            print(f"\nRK4 is approximately {ratio:.1f}x more accurate than Euler")
+        else:
+            print("\nRK4 error is extremely small compared to Euler")
     
-    # Find landing positions
+    # Find and display landing positions in tabular format
     landing_euler = None
     landing_rk4 = None
     
     if config.method in ["euler", "both"]:
         landing_euler = sim.find_landing_position(euler_results)
-        if landing_euler['found']:
-            print(f"\nEuler method landing position:")
-            print(f"Time: {landing_euler['time']:.2f} s")
-            print(f"Distance: {landing_euler['distance']:.2f} m")
     
     if config.method in ["rk4", "both"]:
         landing_rk4 = sim.find_landing_position(rk4_results)
-        if landing_rk4['found']:
-            print(f"\nRK4 method landing position:")
-            print(f"Time: {landing_rk4['time']:.2f} s")
-            print(f"Distance: {landing_rk4['distance']:.2f} m")
+    
+    print("\nLanding Position:")
+    headers = ["Method", "Time (s)", "Distance (m)", "Found"]
+    rows = []
+    
+    if landing_euler:
+        rows.append([
+            "Euler", 
+            f"{landing_euler['time']:.2f}" if landing_euler['found'] else "N/A",
+            f"{landing_euler['distance']:.2f}" if landing_euler['found'] else "N/A",
+            "Yes" if landing_euler['found'] else "No"
+        ])
+    
+    if landing_rk4:
+        rows.append([
+            "RK4", 
+            f"{landing_rk4['time']:.2f}" if landing_rk4['found'] else "N/A",
+            f"{landing_rk4['distance']:.2f}" if landing_rk4['found'] else "N/A",
+            "Yes" if landing_rk4['found'] else "No"
+        ])
+    
+    print_table(headers, rows, [10, 10, 15, 10])
     
     # Generate plots and save report
     plot_results(euler_results, rk4_results, config, config.output_dir)
     save_report(config, euler_results, rk4_results, precision, landing_euler, landing_rk4)
     
     return euler_results, rk4_results
+
+
+def print_table(headers, rows, col_widths):
+    """Print a formatted table with headers and rows"""
+    # Print header
+    header_row = ""
+    for i, header in enumerate(headers):
+        header_row += f"{header:{col_widths[i]}} "
+    print(header_row)
+    
+    # Print separator
+    sep_row = ""
+    for width in col_widths:
+        sep_row += "-" * width + " "
+    print(sep_row)
+    
+    # Print data rows
+    for row in rows:
+        row_str = ""
+        for i, cell in enumerate(row):
+            row_str += f"{cell:{col_widths[i]}} "
+        print(row_str)
 
 
 def run_study(config):
