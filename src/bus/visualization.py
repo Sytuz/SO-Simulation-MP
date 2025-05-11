@@ -672,13 +672,18 @@ def save_report(results, config, is_experiment=False, max_stable_rate=None, outp
         else:
             # Write simulation results
             f.write("Simulation Results:\n")
-            f.write(f"Buses processed: {results['buses_processed']}\n")
-            f.write(f"Average inspection queue length: {results['avg_inspection_queue_length']:.2f}\n")
-            f.write(f"Average repair queue length: {results['avg_repair_queue_length']:.2f}\n")
-            f.write(f"Average inspection delay: {results['avg_inspection_delay']:.2f} hours\n")
-            f.write(f"Average repair delay: {results['avg_repair_delay']:.2f} hours\n")
-            f.write(f"Inspection station utilization: {results['inspection_utilization']:.2f}\n")
-            f.write(f"Repair stations utilization: {results['repair_utilization']:.2f}\n")
+            f.write(f"Buses processed: {results['buses_processed']}\n\n")
+            
+            # Add a dedicated queue statistics section
+            f.write("Queue Statistics:\n")
+            f.write(f"  Average inspection queue length: {results['avg_inspection_queue_length']:.2f}\n")
+            f.write(f"  Average repair queue length: {results['avg_repair_queue_length']:.2f}\n")
+            f.write(f"  Average inspection delay: {results['avg_inspection_delay']:.2f} hours\n")
+            f.write(f"  Average repair delay: {results['avg_repair_delay']:.2f} hours\n\n")
+            
+            f.write("Resource Utilization:\n")
+            f.write(f"  Inspection station utilization: {results['inspection_utilization']:.2f}\n")
+            f.write(f"  Repair stations utilization: {results['repair_utilization']:.2f}\n")
 
 def save_n_simulations_report(aggregate_stats, config, n, seed_info, output_dir="results/bus"):
     """Save a text report of multiple simulation results
@@ -716,29 +721,33 @@ def save_n_simulations_report(aggregate_stats, config, n, seed_info, output_dir=
         f.write(f"  Min: {aggregate_stats['min_buses_processed']}, Max: {aggregate_stats['max_buses_processed']}\n")
         f.write(f"  Range: {aggregate_stats['max_buses_processed'] - aggregate_stats['min_buses_processed']}\n\n")
         
-        f.write(f"Average inspection queue length: {aggregate_stats['avg_inspection_queue']:.2f}\n")
-        f.write(f"  Min: {aggregate_stats['min_inspection_queue']:.2f}, Max: {aggregate_stats['max_inspection_queue']:.2f}\n\n")
+        # Group queue statistics together under a clear heading
+        f.write("Queue Statistics:\n")
+        f.write(f"  Average inspection queue length: {aggregate_stats['avg_inspection_queue']:.2f}\n")
+        f.write(f"    Min: {aggregate_stats['min_inspection_queue']:.2f}, Max: {aggregate_stats['max_inspection_queue']:.2f}\n")
         
-        f.write(f"Average repair queue length: {aggregate_stats['avg_repair_queue']:.2f}\n")
-        f.write(f"  Min: {aggregate_stats['min_repair_queue']:.2f}, Max: {aggregate_stats['max_repair_queue']:.2f}\n\n")
+        f.write(f"  Average repair queue length: {aggregate_stats['avg_repair_queue']:.2f}\n")
+        f.write(f"    Min: {aggregate_stats['min_repair_queue']:.2f}, Max: {aggregate_stats['max_repair_queue']:.2f}\n")
         
-        f.write(f"Average inspection delay: {aggregate_stats['avg_inspection_delay']:.2f} hours\n")
-        f.write(f"  Min: {aggregate_stats['min_inspection_delay']:.2f}, Max: {aggregate_stats['max_inspection_delay']:.2f}\n\n")
+        f.write(f"  Average inspection delay: {aggregate_stats['avg_inspection_delay']:.2f} hours\n")
+        f.write(f"    Min: {aggregate_stats['min_inspection_delay']:.2f}, Max: {aggregate_stats['max_inspection_delay']:.2f}\n")
         
-        f.write(f"Average repair delay: {aggregate_stats['avg_repair_delay']:.2f} hours\n")
-        f.write(f"  Min: {aggregate_stats['min_repair_delay']:.2f}, Max: {aggregate_stats['max_repair_delay']:.2f}\n\n")
+        f.write(f"  Average repair delay: {aggregate_stats['avg_repair_delay']:.2f} hours\n")
+        f.write(f"    Min: {aggregate_stats['min_repair_delay']:.2f}, Max: {aggregate_stats['max_repair_delay']:.2f}\n\n")
         
-        f.write(f"Average inspection station utilization: {aggregate_stats['avg_inspection_utilization']:.2f}\n")
-        f.write(f"  Min: {aggregate_stats['min_inspection_utilization']:.2f}, Max: {aggregate_stats['max_inspection_utilization']:.2f}\n\n")
+        # Group resource utilization
+        f.write("Resource Utilization:\n")
+        f.write(f"  Average inspection station utilization: {aggregate_stats['avg_inspection_utilization']:.2f}\n")
+        f.write(f"    Min: {aggregate_stats['min_inspection_utilization']:.2f}, Max: {aggregate_stats['max_inspection_utilization']:.2f}\n")
         
-        f.write(f"Average repair stations utilization: {aggregate_stats['avg_repair_utilization']:.2f}\n")
-        f.write(f"  Min: {aggregate_stats['min_repair_utilization']:.2f}, Max: {aggregate_stats['max_repair_utilization']:.2f}\n")
+        f.write(f"  Average repair stations utilization: {aggregate_stats['avg_repair_utilization']:.2f}\n")
+        f.write(f"    Min: {aggregate_stats['min_repair_utilization']:.2f}, Max: {aggregate_stats['max_repair_utilization']:.2f}\n\n")
         
         # Add statistical summary
-        f.write("\nStatistical Summary:\n")
-        f.write(f"Standard deviation of buses processed: {statistics.stdev(aggregate_stats.get('buses_processed_list', [0])):.2f}\n")
-        f.write(f"Standard deviation of inspection queue: {statistics.stdev(aggregate_stats.get('inspection_queue_list', [0])):.2f}\n")
-        f.write(f"Standard deviation of repair queue: {statistics.stdev(aggregate_stats.get('repair_queue_list', [0])):.2f}\n")
+        f.write("Statistical Summary:\n")
+        f.write(f"  Standard deviation of buses processed: {statistics.stdev(aggregate_stats.get('buses_processed_list', [0])):.2f}\n")
+        f.write(f"  Standard deviation of inspection queue: {statistics.stdev(aggregate_stats.get('inspection_queue_list', [0])):.2f}\n")
+        f.write(f"  Standard deviation of repair queue: {statistics.stdev(aggregate_stats.get('repair_queue_list', [0])):.2f}\n")
         
         # Add timestamp
         from datetime import datetime

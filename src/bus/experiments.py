@@ -5,6 +5,29 @@ import numpy as np
 from .config import SimConfig
 from .simulation import BusMaintenanceSimulation
 
+"""
+Arrival Rate Experiment Explanation:
+
+The arrival rate experiment systematically tests the bus maintenance facility's
+capacity limits by:
+
+1. Testing a range of arrival rates from low to high (buses/hour)
+2. For each rate, running a full simulation and measuring:
+   - Queue lengths (for both inspection and repair)
+   - Delays experienced by buses
+   - Resource utilization (inspectors and repair stations)
+3. Determining stability at each rate based on thresholds for:
+   - Maximum acceptable queue lengths
+   - Maximum acceptable delays
+   - Maximum acceptable resource utilization
+4. Identifying the maximum stable arrival rate - the highest rate at which
+   the system can operate without exceeding any threshold
+5. Using early stopping when the system clearly becomes unstable to
+   improve computational efficiency
+
+This experiment helps determine how many buses per hour the facility can
+process before becoming overwhelmed.
+"""
 
 def is_system_stable(result, queue_threshold=10, delay_threshold=5.0, util_threshold=0.90):
     """Determine if the system is stable based on multiple criteria
