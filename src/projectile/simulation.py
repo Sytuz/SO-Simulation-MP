@@ -102,7 +102,7 @@ class ProjectileSimulation:
         Compare precision of Euler vs RK4 by using a very small time step solution as reference
         
         Args:
-            reference_dt: Very small time step for "exact" solution
+            reference_dt: Very small time step for reference solution
             
         Returns:
             Dictionary with error metrics
@@ -119,13 +119,13 @@ class ProjectileSimulation:
         ref_x = interp1d(ref_results['time'], ref_results['x'])(self.times)
         ref_z = interp1d(ref_results['time'], ref_results['z'])(self.times)
         
-        # Calculate errors using RMS instead of mean for better representation
+        # Calculate errors using RMS
         euler_x_error = np.sqrt(np.mean((self.results_euler[:, 0] - ref_x)**2))
         euler_z_error = np.sqrt(np.mean((self.results_euler[:, 1] - ref_z)**2))
         rk4_x_error = np.sqrt(np.mean((self.results_rk4[:, 0] - ref_x)**2))
         rk4_z_error = np.sqrt(np.mean((self.results_rk4[:, 1] - ref_z)**2))
         
-        # Ensure we don't have exactly zero errors (which would cause division problems)
+        # Ensure we don't have exactly zero errors
         rk4_x_error = max(rk4_x_error, 1e-12)
         rk4_z_error = max(rk4_z_error, 1e-12)
         

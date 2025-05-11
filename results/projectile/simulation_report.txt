@@ -17,11 +17,32 @@ Landing Positions:
 Method     Time (s)   Distance (m)    Found     
 ---------------------------------------------
 
-Convergence Study Results:
-  Euler method convergence order: O(Δt^1.12)
-  RK4 method convergence order: O(Δt^0.98)
+Convergence Experiment Results:
+Average Euler convergence order: O(Δt^1.02)
+Average RK4 convergence order: O(Δt^0.83)
 
-  Detailed results by time step:
+Results by test case:
+  No air resistance:
+    Parameters: {'vx0': 50.0, 'vz0': 50.0, 'air_resistance': 0.0}
+    Euler convergence: O(Δt^0.95)
+    RK4 convergence: O(Δt^0.66)
+
+  Default:
+    Parameters: {'vx0': 50.0, 'vz0': 50.0, 'air_resistance': 0.01}
+    Euler convergence: O(Δt^1.12)
+    RK4 convergence: O(Δt^0.98)
+
+  High velocity:
+    Parameters: {'vx0': 100.0, 'vz0': 80.0, 'air_resistance': 0.01}
+    Euler convergence: O(Δt^0.98)
+    RK4 convergence: O(Δt^0.88)
+
+  High air resistance:
+    Parameters: {'vx0': 50.0, 'vz0': 50.0, 'air_resistance': 0.05}
+    Euler convergence: O(Δt^1.02)
+    RK4 convergence: O(Δt^0.80)
+
+Detailed results for test case: Default
 dt (s)     Euler Error (m)      RK4 Error (m)       
 --------------------------------------------------
 0.10000    0.636961             0.971361            

@@ -4,7 +4,6 @@ Visualization functions for projectile motion simulation.
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from .config import SimConfig
 
 
 def plot_results(euler_results, rk4_results, config, output_dir=None):
@@ -150,10 +149,51 @@ def plot_convergence_study(results, euler_order, rk4_order, output_dir):
     plt.savefig(f'{output_dir}/convergence_study.png', dpi=300, bbox_inches='tight')
     plt.close()
 
+def plot_convergence_summary(test_cases, output_dir):
+    """Plot a summary of convergence results across all test cases"""
+    plt.figure(figsize=(14, 10))
+    
+    # Create subplots for Euler and RK4
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 7))
+    
+    colors = plt.cm.tab10(np.linspace(0, 1, len(test_cases)))
+    
+    # Plot Euler convergence for all cases
+    for i, case in enumerate(test_cases):
+        dt_array = np.array([r['dt'] for r in case['results']])
+        errors = np.array([r['euler_impact_error'] for r in case['results']])
+        ax1.loglog(dt_array, errors, 'o-', color=colors[i], 
+                  linewidth=1.5, markersize=6, label=case['name'])
+    
+    ax1.set_title('Euler Method Convergence', fontsize=14, fontweight='bold')
+    ax1.set_xlabel('Time step (s)', fontsize=12)
+    ax1.set_ylabel('Impact point error (m)', fontsize=12)
+    ax1.grid(True, which="both", alpha=0.3)
+    ax1.legend(fontsize=10)
+    
+    # Plot RK4 convergence for all cases
+    for i, case in enumerate(test_cases):
+        dt_array = np.array([r['dt'] for r in case['results']])
+        errors = np.array([r['rk4_impact_error'] for r in case['results']])
+        ax2.loglog(dt_array, errors, 'o-', color=colors[i], 
+                  linewidth=1.5, markersize=6, label=case['name'])
+    
+    ax2.set_title('RK4 Method Convergence', fontsize=14, fontweight='bold')
+    ax2.set_xlabel('Time step (s)', fontsize=12)
+    ax2.set_ylabel('Impact point error (m)', fontsize=12)
+    ax2.grid(True, which="both", alpha=0.3)
+    ax2.legend(fontsize=10)
+    
+    plt.suptitle('Convergence Across Different Test Cases', 
+                fontsize=16, fontweight='bold')
+    plt.tight_layout()
+    plt.savefig(f'{output_dir}/convergence_summary.png', dpi=300, bbox_inches='tight')
+    plt.close()
 
-def save_report(config, euler_results=None, rk4_results=None, precision=None, 
-               landing_euler=None, landing_rk4=None, convergence_results=None, 
-               output_dir=None):
+
+def save_report(config, euler_results=None, rk4_results=None,
+               precision=None, landing_euler=None, landing_rk4=None,
+               convergence_results=None, output_dir=None):
     """Save a text report of simulation results"""
     if output_dir is None:
         output_dir = config.output_dir
@@ -170,17 +210,17 @@ def save_report(config, euler_results=None, rk4_results=None, precision=None,
         f.write("\n")
         
         # Final state table
-        if config.method in ["euler", "both"] and euler_results:
+        if euler_results or rk4_results:
             f.write("Final State:\n")
             f.write(f"{'Method':<10} {'Time (s)':<10} {'X (m)':<10} {'Z (m)':<10} {'VX (m/s)':<10} {'VZ (m/s)':<10}\n")
             f.write("-" * 60 + "\n")
             
-            if config.method in ["euler", "both"]:
+            if config.method in ["euler", "both"] and euler_results:
                 f.write(f"{'Euler':<10} {euler_results['time'][-1]:<10.2f} "
                         f"{euler_results['x'][-1]:<10.2f} {euler_results['z'][-1]:<10.2f} "
                         f"{euler_results['vx'][-1]:<10.2f} {euler_results['vz'][-1]:<10.2f}\n")
             
-            if config.method in ["rk4", "both"]:
+            if config.method in ["rk4", "both"] and rk4_results:
                 f.write(f"{'RK4':<10} {rk4_results['time'][-1]:<10.2f} "
                         f"{rk4_results['x'][-1]:<10.2f} {rk4_results['z'][-1]:<10.2f} "
                         f"{rk4_results['vx'][-1]:<10.2f} {rk4_results['vz'][-1]:<10.2f}\n")
@@ -222,17 +262,26 @@ def save_report(config, euler_results=None, rk4_results=None, precision=None,
             
             f.write("\n")
             
-        # Convergence study results
+        # Convergence experiment results
         if convergence_results:
-            f.write("Convergence Study Results:\n")
-            f.write(f"  Euler method convergence order: O(Δt^{convergence_results['euler_order']:.2f})\n")
-            f.write(f"  RK4 method convergence order: O(Δt^{convergence_results['rk4_order']:.2f})\n")
-            f.write("\n")
-            f.write("  Detailed results by time step:\n")
+            f.write("Convergence Experiment Results:\n")
+            f.write(f"Average Euler convergence order: O(Δt^{convergence_results['avg_euler_order']:.2f})\n")
+            f.write(f"Average RK4 convergence order: O(Δt^{convergence_results['avg_rk4_order']:.2f})\n\n")
+            
+            f.write("Results by test case:\n")
+            for case in convergence_results['test_cases']:
+                f.write(f"  {case['name']}:\n")
+                f.write(f"    Parameters: {case['parameters']}\n")
+                f.write(f"    Euler convergence: O(Δt^{case['euler_order']:.2f})\n")
+                f.write(f"    RK4 convergence: O(Δt^{case['rk4_order']:.2f})\n\n")
+            
+            f.write("Detailed results for test case: Default\n")
+            default_case = next((c for c in convergence_results['test_cases'] if c['name'] == 'Default'), 
+                               convergence_results['test_cases'][0])
             
             f.write(f"{'dt (s)':<10} {'Euler Error (m)':<20} {'RK4 Error (m)':<20}\n")
             f.write("-" * 50 + "\n")
             
-            for result in convergence_results['results']:
+            for result in default_case['results']:
                 f.write(f"{result['dt']:<10.5f} {result['euler_impact_error']:<20.6f} "
                         f"{result['rk4_impact_error']:<20.6f}\n")

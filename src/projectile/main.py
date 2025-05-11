@@ -4,7 +4,6 @@ Main entry point for projectile motion simulation.
 import os
 import sys
 import argparse
-import numpy as np
 
 # Add parent directory to path for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -12,7 +11,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from projectile.config import load_config
 from projectile.simulation import ProjectileSimulation
 from projectile.visualization import plot_results, save_report
-from projectile.analysis import run_precision_study
+from projectile.analysis import run_precision_experiment
 
 
 def run_simulation(config):
@@ -51,34 +50,24 @@ def run_simulation(config):
     col_widths = [10, 10, 10, 10, 10, 10]
     print_table(headers, rows, col_widths)
     
-    # Calculate precision comparison if using both methods
-    precision = None
-    if config.method == "both":
-        # Calculate maximum differences
-        max_x_diff = np.max(np.abs(euler_results['x'] - rk4_results['x']))
-        max_z_diff = np.max(np.abs(euler_results['z'] - rk4_results['z']))
-        print(f"\nDifference between methods:")
-        print(f"Maximum X position difference: {max_x_diff:.6f} m")
-        print(f"Maximum Z position difference: {max_z_diff:.6f} m")
-        
-        # Calculate precision comparison with a more appropriate reference
-        precision = sim.compare_precision()
-        
-        # Print precision comparison in tabular format
-        print("\nComparison with reference solution (dt = 0.0001):")
-        headers = ["Method", "X Error (m)", "Z Error (m)", "Total Error (m)"]
-        rows = [
-            ["Euler", f"{precision['euler_x_error']:.6f}", f"{precision['euler_z_error']:.6f}", f"{precision['euler_error_total']:.6f}"],
-            ["RK4", f"{precision['rk4_x_error']:.6f}", f"{precision['rk4_z_error']:.6f}", f"{precision['rk4_error_total']:.6f}"]
-        ]
-        print_table(headers, rows, [10, 15, 15, 15])
-        
-        # Calculate accuracy ratio with protection against very small values
-        if precision['rk4_error_total'] > 1e-10:
-            ratio = precision['euler_error_total'] / precision['rk4_error_total']
-            print(f"\nRK4 is approximately {ratio:.1f}x more accurate than Euler")
-        else:
-            print("\nRK4 error is extremely small compared to Euler")
+    # Calculate precision comparison
+    precision = sim.compare_precision()
+    
+    # Print precision comparison in tabular format
+    print("\nComparison with high-precision reference solution:")
+    headers = ["Method", "X Error (m)", "Z Error (m)", "Total Error (m)"]
+    rows = [
+        ["Euler", f"{precision['euler_x_error']:.6f}", f"{precision['euler_z_error']:.6f}", f"{precision['euler_error_total']:.6f}"],
+        ["RK4", f"{precision['rk4_x_error']:.6f}", f"{precision['rk4_z_error']:.6f}", f"{precision['rk4_error_total']:.6f}"]
+    ]
+    print_table(headers, rows, [10, 15, 15, 15])
+    
+    # Calculate accuracy ratio with protection against very small values
+    if precision['rk4_error_total'] > 1e-10:
+        ratio = precision['euler_error_total'] / precision['rk4_error_total']
+        print(f"\nRK4 is approximately {ratio:.1f}x more accurate than Euler")
+    else:
+        print("\nRK4 error is extremely small compared to Euler")
     
     # Find and display landing positions in tabular format
     landing_euler = None
@@ -114,10 +103,10 @@ def run_simulation(config):
     
     # Generate plots and save report
     plot_results(euler_results, rk4_results, config, config.output_dir)
-    save_report(config, euler_results, rk4_results, precision, landing_euler, landing_rk4)
+    save_report(config, euler_results, rk4_results, 
+                precision, landing_euler, landing_rk4)
     
     return euler_results, rk4_results
-
 
 def print_table(headers, rows, col_widths):
     """Print a formatted table with headers and rows"""
@@ -141,15 +130,23 @@ def print_table(headers, rows, col_widths):
         print(row_str)
 
 
-def run_study(config):
-    """Run a precision study with different time steps"""
-    print("\nRunning precision study with different time steps...")
-    results = run_precision_study(config, output_dir=config.output_dir)
+def run_experiment(config):
+    """Run a precision experiment with different time steps"""
+    print("\nRunning precision experiment with different time steps...")
+    results = run_precision_experiment(config, output_dir=config.output_dir)
     
-    print(f"Euler method convergence order: O(Δt^{results['euler_order']:.2f})")
-    print(f"RK4 method convergence order: O(Δt^{results['rk4_order']:.2f})")
+    # Print average convergence orders from multiple test cases
+    print(f"Average Euler method convergence order: O(Δt^{results['avg_euler_order']:.2f})")
+    print(f"Average RK4 method convergence order: O(Δt^{results['avg_rk4_order']:.2f})")
     
-    # Save the convergence study report
+    # Print detailed results for each test case
+    print("\nDetailed convergence orders by test case:")
+    for case in results['test_cases']:
+        print(f"  {case['name']}:")
+        print(f"    Euler: O(Δt^{case['euler_order']:.2f})")
+        print(f"    RK4: O(Δt^{case['rk4_order']:.2f})")
+    
+    # Save the convergence experiment report
     save_report(config, convergence_results=results, output_dir=config.output_dir)
     
     return results
@@ -169,8 +166,8 @@ def main():
     parser.add_argument('--time', type=float, help='Final simulation time')
     parser.add_argument('--method', type=str, choices=['euler', 'rk4', 'both'], 
                         help='Simulation method: "euler", "rk4", or "both"')
-    parser.add_argument('--study', action='store_true', 
-                        help='Perform precision study with different time steps')
+    parser.add_argument('--experiment', action='store_true', 
+                        help='Perform precision experiment with different time steps')
     parser.add_argument('--output', type=str, 
                         help='Output directory for saving results')
     args = parser.parse_args()
@@ -216,9 +213,9 @@ def main():
     print(f"Method: {config.method}")
     print(f"Output directory: {config.output_dir}")
     
-    # Run either precision study or standard simulation
-    if args.study:
-        results = run_study(config)
+    # Run either precision experiment or standard simulation
+    if args.experiment:
+        results = run_experiment(config)
     else:
         results = run_simulation(config)
     
