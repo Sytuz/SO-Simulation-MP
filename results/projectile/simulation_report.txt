@@ -1,0 +1,52 @@
+=== Projectile Motion Simulation Report ===
+
+Configuration:
+  x0: 0.0
+  z0: 0.0
+  vx0: 50.0
+  vz0: 50.0
+  mass: 1.0
+  air_resistance: 0.01
+  gravity: 9.81
+  dt: 0.01
+  t_final: 10.0
+  method: both
+  output_dir: results/projectile
+
+Landing Positions:
+Method     Time (s)   Distance (m)    Found     
+---------------------------------------------
+
+Convergence Experiment Results:
+Average Euler convergence order: O(Δt^1.02)
+Average RK4 convergence order: O(Δt^0.83)
+
+Results by test case:
+  No air resistance:
+    Parameters: {'vx0': 50.0, 'vz0': 50.0, 'air_resistance': 0.0}
+    Euler convergence: O(Δt^0.95)
+    RK4 convergence: O(Δt^0.66)
+
+  Default:
+    Parameters: {'vx0': 50.0, 'vz0': 50.0, 'air_resistance': 0.01}
+    Euler convergence: O(Δt^1.12)
+    RK4 convergence: O(Δt^0.98)
+
+  High velocity:
+    Parameters: {'vx0': 100.0, 'vz0': 80.0, 'air_resistance': 0.01}
+    Euler convergence: O(Δt^0.98)
+    RK4 convergence: O(Δt^0.88)
+
+  High air resistance:
+    Parameters: {'vx0': 50.0, 'vz0': 50.0, 'air_resistance': 0.05}
+    Euler convergence: O(Δt^1.02)
+    RK4 convergence: O(Δt^0.80)
+
+Detailed results for test case: Default
+dt (s)     Euler Error (m)      RK4 Error (m)       
+--------------------------------------------------
+0.10000    0.636961             0.971361            
+0.05000    0.274414             0.432284            
+0.01000    0.031217             0.107433            
+0.00500    0.016093             0.053188            
+0.00100    0.004078             0.009771            
