@@ -17,6 +17,8 @@ This project is a simulation miniproject developed for the Simulation and Optimi
 ```
 SO-SIMULATION-MP/
 ├── assets/
+│   ├── report.pdf                   # Project report document
+│   ├── report_source_files.zip      # Source files used to generate the report
 │   └── simopt2425_SimProject.pdf    # Project specification document
 ├── config/
 │   ├── bus_config.yaml              # Configuration template for bus maintenance simulation
